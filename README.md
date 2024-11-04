@@ -1,64 +1,109 @@
-# B-LoRA for Kohya-SS
+## What does this do?
+It helps you train B-LoRAs in a docker container. B-LoRAs are a method to split style from content of a stable diffusion network. To read more about it visit:
 
-This repository contains tools needed for training [B-LoRA](https://github.com/yardenfren1996/B-LoRA) files with [kohya-ss/sd-scripts](https://github.com/kohya-ss/sd-scripts).
+https://b-lora.github.io/B-LoRA/
 
-## What is B-LoRA and why should I care?
+https://github.com/yardenfren1996/B-LoRA
 
-The B-LoRA method *"enables implicit style-content separation"* for SDXL LoRAs. In other words, if you wish to train a character, you can use this method to avoid picking up unwanted styles, colors or layouts - i.e. features that often creep into character LoRAs by mistake.
+https://github.com/ThereforeGames/blora_for_kohya (base for this repo)
 
-B-LoRA's approach works quite well, and it deserves more recognition in the broader Stable Diffusion community.
 
-Combining it with sd-scripts gives you access to awesome features like aspect ratio bucketing.
+## Purpose of this repo
 
-## How does B-LoRA work?
+This repo is a based of original https://github.com/ThereforeGames/blora_for_kohya with some additional scripts that make it easier to train using Docker. I've modified Dockerfile that came with https://github.com/bmaltais/kohya_ss, and added FileBrowser service (handy for cloud hosted training). I've also changed the structure of how the projects are laid out. Other than that, if you used kohya with scripts before, there isn't anything new here.
 
-B-LoRA targets specific unet blocks that correlate surprisingly well to `content` and `style`. It seems best to learn these traits in tandem, and then use the provided `blora_slicer.py` on the final LoRA to preserve only the traits you want to keep.
+#### Contributions
 
-Additionally, the B-LoRA trainer has several non-standard options that I have specified in `sdxl_blora_classic.bat`.
+If you want to add something to this repo via pull request, please stick with the idiomacy of existing system, don't change it. If you need to change it just roll your own fork.
 
-## Setup and Use
+## Directions
 
-1. Install the [Lycoris network](https://github.com/KohakuBlueleaf/LyCORIS).
-2. Download this repo and place all its files into the root of your `kohya-ss` directory.
-3. Make a copy of `sdxl_blora_classic.bat`, adjust it to your needs (in particular, the topmost variables and paths), then launch to begin training.
-4. Run `blora_slicer.bat` on the resulting LoRA to filter out `content` or `style` blocks. This will produce a final, smaller LoRA that you can use in the WebUI or Comfy.
+```
+clone --recursive https://github.com/bmaltais/kohya_ss.git
+```
 
-Note that while these batch files are for Windows, it should be trivial to adapt them to Linux.
+```
+clone https://github.com/maxenko/sdxl_blora_docker
+```
 
-If you're using the Kohya GUI instead of sd-scripts, the Lycoris features are pre-installed and you will need to plug in the `sdxl_blora_classic.bat` settings by hand.
+Copy contents of `sdxl_blora_docker` to your `kohya_ss` (root) dir.
 
----
+Direct your terminal to kohya_ss dir, and build the Docker image:
+```
+docker build -t kohya_blora:latest .
+```
 
-## Notes on `sdxl_blora_classic.bat`
+Start the container:
+```
+docker run --gpus all -p 7860:7860 -p 8081:8081 --name blora_trainer --shm-size=1g -v c:/my_training_data:/dataset kohya_blora
+```
 
-- The B-LoRA method responds well to training a substantially higher number of dimensions than usual. On my GeForce 3090, I have set the rank to `1024` and observed great results for `content` without overfitting. This does increase training time and hardware requirements, however. For anime characters and other simple subjects, you can probably get away with a much lower rank.
-- Despite the use of the `prodigy` optimizer, B-LoRA training time is pretty slow, possibly due to options such as `use_bias_correction`. You can try the experimental `sdxl_blora_fast.bat` preset instead - it improves convergence time but may come at a slight hit to quality (more testing needed.)
-- As a point of reference, one of my character datasets contains 168 images and takes ~3 hours to train to 3000 steps. This yields incredibly good likeness without significant signs of overfitting.
+Modify `c:/my_training_data` to point to your data dir.
 
-## Notes on `blora_slicer.bat`
+Kohya interface is on:
+http://localhost:7860
 
-This tool is adapted from B-LoRA's `inference.py`.
+Filebrowser is on:
+http://localhost:8081 (and points to root)
 
-You only need to set up one argument:
+You can manage your data in `/dataset` mount.
 
-- `--loras`: Path(s) to one or more `safetensors` files to extract the blocks from. Most likely, you want to set this to the combined B-LoRA you trained with kohya.
+The layout of the dataset dir is:
 
-Additional optional arguments are available:
+```
+base_models/
+    sd_xl_base_1.0.safetensors
+projects/
+    my_project/
+        output_01/
+            my_project_01-000001.safetensors
+            my_project_01-000002.safetensors
+            ...
+            my_project_01-100000.safetensors
+        set_01/
+            img01.png
+            img02.png
+            ...
+            imgXX.png
+        config.toml
+        train.sh
+```
 
-- `--traits`: A list of traits to filter from your LoRAs, in the same order as the LoRAs. Defaults to `content`. Check the included `blora_traits.json` for supported traits.
-- `--alphas`: A list of alpha values to scale the LoRAs, in the same order as the LoRAs. Defaults to `1.0`, or full strength.
-- `--output_path`: The save location of the sliced-up LoRA. Defaults to `model.safetensors` in the same directory as this script.
-- `--debug`: Print some diagnostic information to the console.
+You'll need to download the base SDXL model.
 
-## Notes on Lycoris presets
+https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/sd_xl_base_1.0.safetensors
 
-The Lycoris preset determines which unet blocks to train.
+Examine config.toml, you'll need to modify it for your project.
+`train.sh` also has some settings you can modify (like Rank) per project.
 
-- `blora_content_style.toml`: This preset matches the original B-LoRA method, training content and style blocks in tandem.
-- `blora_content_layout_style.toml`: In addition to content and style, this preset targets blocks that allegedly correlate to image layout. This can potentially improve learning/reduce potential for overfitting, but it has a couple drawbacks: 1) higher VRAM requirement, limiting the number of dimensions you can train. 2) In my initial testing, the layout blocks appear to contain some information that affects character likeness, or what I would classify as "content."
+#### To train:
 
----
+Terminal into the container:
 
-⭐ Feel free to give this repo a star if you found it helpful.
+```
+docker exec -it blora_trainer /bin/bash
+```
 
-Thank you to @slashedstar for [introducing the idea of using Lycoris to recreate the B-LoRA method.](https://github.com/kohya-ss/sd-scripts/issues/1215)
+Navigate to your project (assuming you've uploaded it through Filebrowser)
+
+```
+cd /dataset/my_project
+./train.sh
+```
+
+#### After training
+After you've trained your LoRA for sufficient amount of steps, you still need to split it into either Style or Content (or other) type. Original repo (https://github.com/ThereforeGames/blora_for_kohya) has directions on how to do this.
+But in short, modify an existing split.sh file to your needs and run it on your LoRA checkpoint.
+
+```
+
+```
+
+## Performance expectations / Tips
+The biggest speed limitation is the VRAM IO. Watch your GPU stats for Copy operations, ideally you want these at 0.
+
+I am getting 1.01s/it on an overclocked RTX3090 with 86 images and network rank of 256, with 50% of VRAM usage. Increasing the rank will increase VRAM usage and output lora file size, as well as potentially slowing the training down to a crawl due to constantly copying data in/out of VRAM if you exceed your capacity.
+
+Training takes a while, but depends on your parameters and dataset size. If you're not seeing any effect from your style LoRA, try upping the LoRA weight to something like 2.5. If you have to do this, you probably want to train longer.
+Use `DPM++ SDE Karras` to test. This is the only sampler and scheduler combo I've used.
+These LoRAs work well with Turbo and Lightning models, so 4-7 steps with Scale of 1.0-3.0 are good starting points.
