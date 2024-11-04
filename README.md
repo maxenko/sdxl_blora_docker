@@ -19,11 +19,11 @@ If you want to add something to this repo via pull request, please stick with th
 ## Directions
 
 ```
-clone --recursive https://github.com/bmaltais/kohya_ss.git
+git clone --recursive https://github.com/bmaltais/kohya_ss.git
 ```
 
 ```
-clone https://github.com/maxenko/sdxl_blora_docker
+git clone https://github.com/maxenko/sdxl_blora_docker
 ```
 
 Copy contents of `sdxl_blora_docker` to your `kohya_ss` (root) dir.
