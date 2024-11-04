@@ -16,7 +16,7 @@ This repo is a based of original https://github.com/ThereforeGames/blora_for_koh
 
 If you want to add something to this repo via pull request, please stick with the idiomacy of existing system, don't change it. If you need to change it just roll your own fork.
 
-## Directions
+## Directions (localhost)
 
 ```
 git clone --recursive https://github.com/bmaltais/kohya_ss.git
@@ -75,6 +75,11 @@ https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/sd_xl_
 
 Examine config.toml, you'll need to modify it for your project.
 `train.sh` also has some settings you can modify (like Rank) per project.
+
+
+## Directions (cloud)
+
+Just run `docker-extra/install_and_run.sh`, pico and paste, then chmod +x.
 
 #### To train:
 
