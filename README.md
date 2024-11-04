@@ -96,7 +96,7 @@ After you've trained your LoRA for sufficient amount of steps, you still need to
 But in short, modify an existing split.sh file to your needs and run it on your LoRA checkpoint.
 
 ```
-
+todo: need to make .sh versions of slicer .bat files and locilize to project dir
 ```
 
 ## Performance expectations / Tips
