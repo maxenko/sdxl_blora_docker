@@ -92,8 +92,15 @@ docker exec -it blora_trainer /bin/bash
 Navigate to your project (assuming you've uploaded it through Filebrowser)
 
 ```
-cd /dataset/my_project
+cd /dataset/projects/my_project
+chmod +x train.sh
 ./train.sh
+```
+
+or if you want to run detached:
+
+```
+docker exec -d blora_trainer /bin/bash -c /dataset/projects/my_project/train.sh
 ```
 
 #### After training

@@ -15,5 +15,5 @@ rm -rf sdxl_blora_docker
 cd kohya_ss
 docker build -t kohya_blora:latest .
 docker run -d --gpus all -p 7860:7860 -p 8081:8081 --name blora_trainer --shm-size=1g kohya_blora
-docker cp sd_xl_base_1.0.safetensors blora_trainer:/dataset/base_models/sd_xl_base_1.0.safetensors
+docker cp ../sd_xl_base_1.0.safetensors blora_trainer:/dataset/base_models/sd_xl_base_1.0.safetensors
 #rm sd_xl_base_1.0.safetensors

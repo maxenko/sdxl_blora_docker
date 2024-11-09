@@ -98,6 +98,7 @@ RUN groupadd -g $UID $UID && \
 # Create directories with correct permissions
 RUN install -d -m 775 -o $UID -g 0 /dataset && \
     install -d -m 775 -o $UID -g 0 /dataset/base_models && \
+    install -d -m 775 -o $UID -g 0 /dataset/projects && \
     install -d -m 775 -o $UID -g 0 /licenses && \
     install -d -m 775 -o $UID -g 0 /app
 
